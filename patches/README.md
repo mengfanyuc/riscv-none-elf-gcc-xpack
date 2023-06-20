@@ -1,3 +1,3 @@
 # Patches
 
-No local patches, use the helper patches.
+gcc-12.2.0 patch for wch
