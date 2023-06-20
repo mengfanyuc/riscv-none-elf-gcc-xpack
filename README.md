@@ -3,6 +3,12 @@
 [![npm (scoped)](https://img.shields.io/npm/v/@xpack-dev-tools/riscv-none-elf-gcc.svg?color=blue)](https://www.npmjs.com/package/@xpack-dev-tools/riscv-none-elf-gcc/)
 [![license](https://img.shields.io/github/license/xpack-dev-tools/riscv-none-elf-gcc-xpack)](https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/blob/xpack/LICENSE)
 
+## The xPack GNU RISC-V Embedded GCC for Wch
+
+Download the release files for Linux64 Win64 MacOS
+Thanks for https://github.com/hydrausb3/riscv-none-elf-gcc-xpack provide patches
+Thanks for https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack provide packaging tools
+
 ## The xPack GNU RISC-V Embedded GCC
 
 A standalone cross-platform (Windows/macOS/Linux) **GNU RISC-V Embedded GCC**
