@@ -5,7 +5,7 @@
 
 ## The xPack GNU RISC-V Embedded GCC for Wch
 
-### Download the release files for Linux64 Win64 MacOS.
+### Download the release files for Linux64 Win64.
 ### Thanks for https://github.com/hydrausb3/riscv-none-elf-gcc-xpack provide patches.
 ### Thanks for https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack provide packaging tools.
 
