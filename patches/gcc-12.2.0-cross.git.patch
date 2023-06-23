@@ -1,5 +1,5 @@
 diff --git a/gcc/config/riscv/riscv.cc b/gcc/config/riscv/riscv.cc
-index 4939d9964..8658e609c 100644
+index 4939d9964..07f122f61 100644
 --- a/gcc/config/riscv/riscv.cc
 +++ b/gcc/config/riscv/riscv.cc
 @@ -125,8 +125,9 @@ struct GTY(())  riscv_frame_info {
@@ -27,26 +27,44 @@ index 4939d9964..8658e609c 100644
  	      *no_add_attrs = true;
  	    }
  	}
-@@ -3879,6 +3880,14 @@ riscv_frame_set (rtx mem, rtx reg)
+@@ -3879,6 +3880,32 @@ riscv_frame_set (rtx mem, rtx reg)
    return set;
  }
  
-+/* wch fast interrupt push fixed reg and ra reg by hardware */
++/* wch fast interrupt pushes/pops fixed used and ra registers other than
++   s0, s1, and float point register(when use hard float point function)
++   into the stack by hardware automatically */
 +
 +static bool
 +riscv_wch_fast_interrupt_saved_reg (unsigned int regno)
 +{
-+  return (call_used_or_fixed_reg_p(regno) || (regno == RETURN_ADDR_REGNUM));
++  if (regno == RETURN_ADDR_REGNUM)
++    return true;
++  
++  if (call_used_or_fixed_reg_p(regno))
++    {
++      /* It doesn't matter when software float point */
++      if (UNITS_PER_FP_ARG == 0)
++        return true;
++      /* The hardware float point needs to be manually pushed/poped
++         into the stack */  
++      else if ((regno >= FP_REG_FIRST) && (regno <= FP_REG_LAST))
++        return false;
++      else
++        return true;  
++    }
++
++  return false;
 +}
 +
  /* Return true if the current function must save register REGNO.  */
  
  static bool
-@@ -3887,6 +3896,11 @@ riscv_save_reg_p (unsigned int regno)
+@@ -3887,6 +3914,11 @@ riscv_save_reg_p (unsigned int regno)
    bool call_saved = !global_regs[regno] && !call_used_or_fixed_reg_p (regno);
    bool might_clobber = crtl->saves_all_registers
  		       || df_regs_ever_live_p (regno);
-+  /* wch fast interrupt push register REGNO by hardware */
++  /* wch fast interrupt saves automatically */
 +  if (cfun->machine->interrupt_handler_p
 +      && (cfun->machine->interrupt_mode == WCH_FAST_MODE)
 +      && riscv_wch_fast_interrupt_saved_reg(regno))
@@ -54,7 +72,7 @@ index 4939d9964..8658e609c 100644
  
    if (call_saved && might_clobber)
      return true;
-@@ -4607,6 +4621,8 @@ riscv_expand_epilogue (int style)
+@@ -4607,6 +4639,8 @@ riscv_expand_epilogue (int style)
  	emit_jump_insn (gen_riscv_mret ());
        else if (mode == SUPERVISOR_MODE)
  	emit_jump_insn (gen_riscv_sret ());
@@ -63,11 +81,11 @@ index 4939d9964..8658e609c 100644
        else
  	emit_jump_insn (gen_riscv_uret ());
      }
-@@ -4619,6 +4635,12 @@ riscv_expand_epilogue (int style)
+@@ -4619,6 +4653,12 @@ riscv_expand_epilogue (int style)
  bool
  riscv_epilogue_uses (unsigned int regno)
  {
-+  /* wch fast interrupt pop register REGNO by hardware */
++  /* wch fast interrupt end epilogue automatically */
 +  if (epilogue_completed && cfun->machine->interrupt_handler_p
 +      && (cfun->machine->interrupt_mode == WCH_FAST_MODE)
 +      && riscv_wch_fast_interrupt_saved_reg (regno))
@@ -76,7 +94,7 @@ index 4939d9964..8658e609c 100644
    if (regno == RETURN_ADDR_REGNUM)
      return true;
  
-@@ -5348,6 +5370,8 @@ riscv_get_interrupt_type (tree decl)
+@@ -5348,6 +5388,8 @@ riscv_get_interrupt_type (tree decl)
  	return USER_MODE;
        else if (!strcmp (string, "supervisor"))
  	return SUPERVISOR_MODE;
@@ -85,11 +103,11 @@ index 4939d9964..8658e609c 100644
        else /* Must be "machine".  */
  	return MACHINE_MODE;
      }
-@@ -5499,6 +5523,12 @@ bool
+@@ -5499,6 +5541,12 @@ bool
  riscv_hard_regno_rename_ok (unsigned from_regno ATTRIBUTE_UNUSED,
  			    unsigned to_regno)
  {
-+  /* wch fast interrupt push REG_NO can rename */
++  /* wch fast interrupt registers saved/restored by hardware can be renamed */
 +  if (cfun->machine->interrupt_handler_p
 +      && (cfun->machine->interrupt_mode == WCH_FAST_MODE)
 +      && riscv_wch_fast_interrupt_saved_reg (to_regno))
